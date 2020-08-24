@@ -13,26 +13,42 @@
         </div>
       </div>
       <div class="left">
-        <div class="reciprocal">25:00</div>
+        <div class="reciprocal">{{ countdown.min }}:{{ countdown.sec }}</div>
         <span class="btn alert">
           <svg class="reciprocalIcon"><use xlink:href="#icon-bell" /></svg>
         </span>
-        <span class="btn start">
-          <svg class="reciprocalIcon"><use xlink:href="#icon-play--orange" /></svg>
+        <span class="btn start" @click="countdownStart">
+          <svg v-show="status.type == 'work'" class="reciprocalIcon">
+            <use v-show="!status.ing" xlink:href="#icon-play--orange" />
+            <use v-show="status.ing" xlink:href="#icon-pause--orange" />
+          </svg>
+          <svg v-show="status.type == 'rest'" class="reciprocalIcon">
+            <use v-show="!status.ing" xlink:href="#icon-play--green" />
+            <use v-show="status.ing" xlink:href="#icon-pause--green" />
+          </svg>
         </span>
-        <span class="btn reset">
+        <span class="btn reset" @click="reset">
           <svg class="reciprocalIcon"><use xlink:href="#icon-cancel" /></svg>
+        </span>
+        <span class="btn refresh" @click="refresh">
+          <svg class="reciprocalIcon"><use xlink:href="#icon-refresh" /></svg>
         </span>
       </div>
       <div class="right">
-        <div class="reciprocal">25:00</div>
-        <div class="reciprocal">25:00</div>
-        <div class="reciprocal">25:00</div>
-        <div class="reciprocal">25:00</div>
+        <div class="todolist"
+          v-for="(item, index) in todoList" :key="index" :class="{'ing':index==0}">
+          <span>O</span>
+          <span>{{ item.des }}</span>
+        </div>
       </div>
     </div>
-    <!-- footer icon -->
-    <svg class="tomatoIcon"><use xlink:href="#tomato--orange" /></svg>
+    <!-- background icon -->
+    <div>
+      <svg class="tomatoIcon">
+        <use v-show="status.type == 'work'" xlink:href="#tomato--orange" />
+        <use v-show="status.type == 'rest'" xlink:href="#tomato--green" />
+      </svg>
+    </div>
   </div>
 </template>
 
@@ -45,9 +61,92 @@ export default {
       week: '',
       time: '',
       timerID: '',
+
+      task: {
+        isComplete: false,
+        des: '',
+      },
+      todoList: [{
+        isComplete: false,
+        des: '構思番茄鐘UI介面',
+      },{
+        isComplete: false,
+        des: '製作番茄鐘UI介面',
+      },{
+        isComplete: false,
+        des: '製作番茄鐘功能',
+      }],
+
+      status: {
+        type: 'work',
+        ing: false,
+      },
+      countdownID:'',
+      countdown: {
+        min: '25',
+        sec: '00'
+      }
     }
   },
   methods: {
+    updateContdown() {
+      let me = this;
+      let min = Number(me.countdown.min);
+      let sec = Number(me.countdown.sec);
+
+      if(sec == 0) {
+        min -= 1;
+        sec = 59; 
+      } else {
+        sec -= 1;
+
+      }
+      if(min < 10) {
+        min = '0'+ String(min);
+      }
+      if(sec < 10) {
+        sec = '0'+ String(sec);
+      }
+      me.countdown.min = min;
+      me.countdown.sec = sec;
+    },
+    countdownStart() {
+      this.status.ing = !this.status.ing;
+      if(this.status.ing) {
+        this.updateContdown();
+        this.countdownID = setInterval(this.updateContdown, 1000); 
+      } else {
+        if(this.countdownID) {
+          clearInterval(this.countdownID);
+        }
+      }
+    },
+    refresh() {
+      if(this.countdownID) {
+        clearInterval(this.countdownID);
+      }
+      if(this.status.type == 'work') {
+        this.status.type = 'rest';
+        this.status.ing = false;
+      } else {
+        this.status.type = 'work';
+        this.status.ing = false;
+      }
+      this.reset();
+    },
+    reset() {
+      if(this.countdownID) {
+        clearInterval(this.countdownID);
+      }
+      if(this.status.type == 'work') {
+        this.countdown.min = '25';
+        this.countdown.sec = '00';
+      } else {
+        this.countdown.min = '05';
+        this.countdown.sec = '00';
+      }
+      this.status.ing = false;
+    },
     calDate() {
       let date = new Date();
       let year = date.getFullYear();
@@ -201,8 +300,8 @@ body {
   }
 
   .reciprocalIcon {
-    width: 45px;
-    height: 45px;
+    width: 30px;
+    height: 30px;
     position:absolute;
     top:50%;
     bottom:50%;
@@ -217,6 +316,10 @@ body {
     margin-right: 30px;
     border: 2px solid #fff;
     border-radius:50%;
+
+    :hover {
+      cursor: pointer;
+    }
   }
   .start {
     background-color: #fff;
@@ -236,5 +339,26 @@ body {
     width: 1280px;
     height: 340px;
     z-index: -999;
+}
+
+.right {
+  text-align: left;
+
+  .todolist {
+    font-size:20px;
+    margin: 20px 0px 30px 100px;
+
+    span {
+      margin-right: 5px;
+    }
+  }
+
+  .ing {
+    font-size: 40px;
+
+    span {
+      margin-right: 10px;
+    }
+  }
 }
 </style>
