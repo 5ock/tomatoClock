@@ -1,8 +1,33 @@
 <template>
   <div id="app">
-    <div class="sideBar">
-      <svg class="sideBarIcon"><use xlink:href="#icon-list" /></svg>
-      <svg class="sideBarIcon"><use xlink:href="#icon-analysis" /></svg>
+    <div class="sideBar" v-click-outside="clickedOutside">
+      <div>
+        <svg class="sideBarIcon" @click="editTodo.isShow=!editTodo.isShow"><use xlink:href="#icon-list" /></svg>
+      </div>
+      <div class="todolist_setting" v-show="editTodo.isShow">
+        <div class="todolist_setting_top">
+          <span class="title">代辦清單</span>
+          <div class="title_right">
+            <span :class="{'select':editTodo.type=='uncomplete'}" @click="editTodo.type='uncomplete'">未完成</span>
+            <span :class="{'select':editTodo.type=='complete'}" @click="editTodo.type='complete'">已完成</span>
+          </div>
+          <div class="addTodo">
+            <input class="input_todo" type="text" placeholder="新增代辦事項" v-model="newTodoDes">
+            <span class="add_icon" @click="addTodo">+</span>
+          </div>
+          <div class="list"
+              v-for="(item, index) in filterTodoList" 
+              :key="index">
+            <span class="circle"></span>
+            <span class="todo_des">{{ item.des }}</span>
+            <svg @click="deleteItem(item.index)" class="editeIcon"><use xlink:href="#icon-delete" /></svg>
+            <svg class="editeIcon"><use xlink:href="#icon-edit" /></svg>
+          </div>
+        </div>
+      </div>
+      <div>
+        <svg class="sideBarIcon"><use xlink:href="#icon-analysis" /></svg>
+      </div>
     </div>
     <div class="main">
       <div class="top">
@@ -35,8 +60,11 @@
         </span>
       </div>
       <div class="right">
+        <div class="todolist_rest" v-show="status.type=='rest'">休息，是為了下一次的努力</div>
         <div class="todolist"
-          v-for="(item, index) in todoList" :key="index" :class="{'ing':index==0}">
+          v-for="(item, index) in uncompleteAry" 
+          :key="index" 
+          :class="{'ing':((index==0)&&(status.type=='work'))}">
           <span>O</span>
           <span>{{ item.des }}</span>
         </div>
@@ -67,7 +95,7 @@ export default {
         des: '',
       },
       todoList: [{
-        isComplete: false,
+        isComplete: true,
         des: '構思番茄鐘UI介面',
       },{
         isComplete: false,
@@ -85,10 +113,35 @@ export default {
       countdown: {
         min: '25',
         sec: '00'
-      }
+      },
+
+      editTodo: {
+        isShow: true,
+        type: 'uncomplete',
+      },
+      newTodoDes: '',
     }
   },
   methods: {
+    clickedOutside() {
+      this.editTodo.isShow = false;
+    },
+    deleteItem(index) {
+      this.todoList.splice(index, 1)
+    },
+    addTodo() {
+      if(this.newTodoDes == '') {
+        return;
+      }
+
+      let taskObj = {
+        isComplete: false,
+        des: this.newTodoDes
+      };
+
+      this.todoList.push(taskObj);
+      this.newTodoDes = '';
+    },
     updateContdown() {
       let me = this;
       let min = Number(me.countdown.min);
@@ -184,6 +237,50 @@ export default {
     this.calDate();
     this.timerID = setInterval(this.updateTime, 10000);
     this.updateTime();
+  },
+  computed: {
+    filterTodoList() {
+      let completeAry = [];
+      let uncompleteAry = [];
+      for(let i=0; i<this.todoList.length; i++) {
+        if(this.todoList[i].isComplete) {
+          let obj = {
+            isComplete: this.todoList[i].isComplete,
+            des: this.todoList[i].des,
+            index: i
+          }
+          completeAry.push(obj);
+        } else {
+          let obj = {
+            isComplete: this.todoList[i].isComplete,
+            des: this.todoList[i].des,
+            index: i
+          }
+          uncompleteAry.push(obj);
+        }
+      }
+
+      if(this.editTodo.type == 'uncomplete') {
+        return uncompleteAry;
+      } else {
+        return completeAry;
+      }
+    },
+    uncompleteAry() {
+      let uncompleteAry = [];
+      for(let i=0; i<this.todoList.length; i++) {
+        if(!this.todoList[i].isComplete) {
+          let obj = {
+            isComplete: this.todoList[i].isComplete,
+            des: this.todoList[i].des,
+            index: i
+          }
+          uncompleteAry.push(obj);
+        }
+      }
+
+      return uncompleteAry;
+    }
   }
 }
 </script>
@@ -248,6 +345,7 @@ body {
   color: #2c3e50;
 }
 
+
 .sideBar {
   position: absolute;
   top: 0px;
@@ -256,11 +354,116 @@ body {
   height: 100%;
   background: #E8E8E8 0% 0% no-repeat padding-box;
   opacity: 1;
+
+  .todolist_setting {
+    color: white;
+    width: 820px;
+    height: 100%;
+    position: fixed;
+    left: 80px;
+    top: 0px;
+    z-index: 999;
+    background: #304030 0% 0% no-repeat padding-box;
+    box-shadow: 0px 0px 40px #0000003D;
+    opacity: 1;
+
+    .todolist_setting_top {
+      text-align: left;
+      height: 59px;
+      line-height: 59px;
+        margin: 20px;
+
+      .title {
+        font-size: 40px;
+        font-weight: bolder;
+        margin-left: 40px;
+      }
+      .title_right {
+        float: right;
+        color: #aaa;
+        
+        span {
+          margin-right: 20px;
+          cursor: pointer;
+        }
+
+        .select {
+          color: #fff;
+        }
+      }
+
+      // add todo
+      .addTodo {
+        text-align: center;
+        border-bottom: 1px solid #e8e8e8;
+        margin: 30px 10% 0;
+        padding-bottom: 40px;
+      }
+      .input_todo {
+        padding: 0 30px 0;
+        font-size: 20px;
+        top: 179px;
+        left: 120px;
+        width: 560px;
+        height: 56px;
+        background: #FFF;
+        border: 1px solid #FFF;
+        border-radius: 180px;
+        outline: none;
+      }
+      .add_icon {
+        position: absolute;
+        top: 126px;
+        right: 120px;
+        line-height: 40px;
+        font-size: 32px;
+        width: 48px;
+        height: 40px;
+        background: #F08448;
+        border-radius: 70px;
+        cursor: pointer;
+      }
+
+      // todolist
+      .list {
+        font-size: 16px;
+        margin: 0 auto;
+        height: 50px;
+        line-height: 50px;
+        width: 80%;
+        border-bottom: 1.5px solid #aaa;
+
+        span {
+          vertical-align: middle;
+        }
+
+        .todo_des {
+          margin-left: 20px;
+        }
+        
+        .circle {
+          display: inline-block;
+          width: 24px;
+          height: 24px;
+          border: 2px solid #E8E8E8;
+          border-radius: 14px;
+          opacity: 1;
+        }
+      }
+    }
+  }
+}
+
+.editeIcon {
+  vertical-align: middle;
+  float: right;
+  margin-top: 8px;
+  width: 30px;
+  height: 30px;
 }
 .sideBarIcon {
-  position: relative;
-  top: 30%;
-  width: 45px
+  width: 45px;
+  cursor: pointer;
 }
 
 .main {
@@ -326,11 +529,6 @@ body {
   }
 }
 
-.right {
-  flex: 50%;
-  // width: 50%;
-}
-
 .tomatoIcon {
     position: fixed;
     bottom: 0;
@@ -342,7 +540,12 @@ body {
 }
 
 .right {
+  flex: 50%;
   text-align: left;
+
+  .todolist_rest {
+    font-size: 40px;
+  }
 
   .todolist {
     font-size:20px;
