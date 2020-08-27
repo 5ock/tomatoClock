@@ -6,6 +6,7 @@ const resolve = (dir) => {
 }
 
 module.exports = {
+  publicPath: './',
   chainWebpack: config => {
     // 先刪除預設的svg配置
     config.module.rules.delete("svg")
