@@ -116,7 +116,7 @@ export default {
       },
 
       editTodo: {
-        isShow: true,
+        isShow: false,
         type: 'uncomplete',
       },
       newTodoDes: '',
