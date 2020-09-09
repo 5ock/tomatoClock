@@ -1,4 +1,10 @@
-# tomatoclock
+# 番茄鐘
+
+[Demo](https://5ock.github.io/tomatoClock/)
+
+## 說明
+- 工作時間 25 分鐘
+- 休息時間 5 分鐘
 
 ## Project setup
 ```
@@ -9,16 +15,3 @@ npm install
 ```
 npm run serve
 ```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
